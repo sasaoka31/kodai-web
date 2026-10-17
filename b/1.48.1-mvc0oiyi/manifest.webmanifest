@@ -1,0 +1,12 @@
+{
+  "name": "Kodai",
+  "short_name": "Kodai",
+  "lang": "ja",
+  "start_url": "../../",
+  "scope": "../../",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#1d1f24",
+  "theme_color": "#1d1f24",
+  "icons": [{ "src": "icon.png", "sizes": "512x512", "type": "image/png" }]
+}

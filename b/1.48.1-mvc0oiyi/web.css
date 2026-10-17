@@ -1,0 +1,65 @@
+/* Web 版(iPad など)だけの見た目。styles.css のあとに読み込む */
+
+html, body {
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation; /* ダブルタップでページが拡大するのを止める */
+  overscroll-behavior: none;
+}
+html { position: fixed; inset: 0; }
+input, textarea { -webkit-user-select: text; user-select: text; }
+
+/* Safari のアドレスバーの分を引いた、見えている高さに合わせる。ノッチ・ホームバーをよける */
+#app {
+  height: 100dvh;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+#topbar { flex-wrap: wrap; row-gap: 6px; }
+#topbar .group { flex-wrap: wrap; }
+
+/* 幅がせまいとき(iPad の縦向きなど): ツールの設定は下の段に、横いっぱいで出す */
+@media (max-width: 1000px) {
+  #tool-options-slot { order: 5; flex-basis: 100%; }
+  #tool-options { position: static; border: none; padding: 0; min-height: 30px; }
+  #topbar .view-controls { margin-left: auto; }
+}
+
+/* 境目は指でつかめる太さに */
+.splitter { touch-action: none; }
+.splitter::after { content: ""; position: absolute; inset: -8px; }
+
+/* メニュー */
+#web-menu {
+  position: fixed; z-index: 400; display: flex; flex-direction: column; gap: 2px; padding: 4px;
+  max-height: calc(100dvh - 70px); overflow-y: auto;
+  background: var(--panel); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 6px 20px rgba(0,0,0,.45);
+}
+#web-menu button { text-align: left; background: transparent; border-color: transparent; padding: 7px 12px; }
+#web-menu button:hover { background: var(--accent-2); }
+#web-menu .wm-head { padding: 6px 12px 2px; font-size: 11px; color: var(--muted); }
+#web-menu .wm-ver { padding: 8px 12px 4px; font-size: 11px; color: var(--muted); border-top: 1px solid var(--border); margin-top: 4px; }
+
+/* キーの代わり(キャンバスの左下) */
+#web-keys { position: absolute; left: 10px; bottom: 10px; z-index: 6; display: flex; gap: 6px; }
+#web-keys button { padding: 7px 12px; background: rgba(37,40,46,.92); }
+
+/* 指で押すときは、ボタンを少し大きく */
+@media (pointer: coarse) {
+  button { min-height: 32px; }
+  button.icon-text { min-width: 34px; }
+  .tool-btn { width: 40px; height: 40px; }
+  #app { grid-template-columns: 54px minmax(0, 1fr) 5px var(--side-w, 272px); }
+  input[type="number"], input[type="text"], select { min-height: 30px; }
+}
+
+/* タブ: 指で押しやすく */
+@media (pointer: coarse) {
+  #tabbar { height: 36px; }
+  #tabbar .tab { height: 32px; }
+  #tabbar .tab-x { min-height: 0; height: 26px; width: 26px; }
+  #tabbar .tab-plus { min-height: 0; height: 30px; width: 34px; }
+}
+body.rulers-on #web-keys { left: 28px; } /* 定規をよける */

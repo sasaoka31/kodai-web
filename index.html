@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="ja" data-version="1.48.1" data-build="1.48.1-mvc0oiyi">
+<head>
+  <meta charset="utf-8">
+  <base href="b/1.48.1-mvc0oiyi/">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Kodai">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="theme-color" content="#1d1f24">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icon.png">
+  <link rel="icon" href="icon.png">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self'">
+  <title>Kodai</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="web.css">
+</head>
+<body>
+  <div id="app">
+    <header id="topbar">
+      <!-- 上のバーのボタンと、左のツールバー: 並ぶものは prefs.topbar / prefs.toolbar(レイアウトで自由に変えられる。ui.js の drawBars が作る) -->
+      <div class="group" id="topbar-actions"></div>
+      <!-- ツールの設定: 1段に収まらない分は、バーを高くせずにキャンバスの上へ重ねて出す(選ぶたびに画面が上下に動かないように) -->
+      <div id="tool-options-slot"><div id="tool-options"></div></div>
+      <div class="group view-controls">
+        <button data-action="grid" id="btn-grid" title="ピクセルグリッド (Ctrl+')">グリッド</button>
+        <button data-action="zoomOut" class="icon-text" title="ズームアウト (Ctrl+-)">−</button>
+        <span id="zoom-label">100%</span>
+        <button data-action="zoomIn" class="icon-text" title="ズームイン (Ctrl+=)">＋</button>
+        <button data-action="fit" title="全体表示 (Ctrl+0)">全体</button>
+        <button data-action="layout" id="btn-layout" title="上のバーと左のツールバーのボタンを、持って好きな所へ動かす(置いていない機能のボタンも足せます)">レイアウト</button>
+      </div>
+    </header>
+
+    <nav id="toolbar"></nav>
+
+    <!-- タブ(絵を何枚も同時に開く。フォント作成もタブの1つ。tabs.js) -->
+    <div id="tabbar"></div>
+
+    <main id="canvas-area">
+      <canvas id="view"></canvas>
+      <!-- 定規(guides.js)。ドラッグでガイドを引き出す -->
+      <canvas id="ruler-h" class="ruler" title="ドラッグして横のガイドを置く"></canvas>
+      <canvas id="ruler-v" class="ruler" title="ドラッグして縦のガイドを置く"></canvas>
+      <div id="ruler-corner" class="ruler"></div>
+    </main>
+
+    <div id="split-side" class="splitter v" title="ドラッグでサイドバーの幅を変える / ダブルクリックで元の幅"></div>
+
+    <aside id="sidebar">
+      <section class="panel" id="panel-font">
+        <div class="panel-head">
+          <h3>フォント</h3>
+          <span id="font-title" class="panel-sub"></span>
+        </div>
+        <div id="font-body"></div>
+      </section>
+
+      <section class="panel" id="panel-color">
+        <h3>カラー</h3>
+        <div class="color-row">
+          <div class="swatch-stack">
+            <div id="sw-secondary" class="swatch secondary" title="サブカラー(クリックで入れ替え)"></div>
+            <div id="sw-primary" class="swatch primary" title="メインカラー"></div>
+            <button id="btn-swap" class="swap" title="入れ替え (X)">⇄</button>
+          </div>
+          <div class="color-inputs">
+            <label><span>色</span><input type="color" id="in-color"><button id="btn-pick" class="paint-pick" type="button" title="スポイト: キャンバスの色をクリックで拾う(Esc でやめる)"></button></label>
+            <label><span>HEX</span><input type="text" id="in-hex" maxlength="9" spellcheck="false"></label>
+            <label><span>不透明</span><input type="range" id="in-alpha" min="0" max="255"><em id="alpha-val"></em></label>
+          </div>
+        </div>
+        <div class="recent-head">最近使った色</div>
+        <div id="recent-colors"></div>
+      </section>
+
+      <section class="panel" id="paint-panel">
+        <div class="panel-head">
+          <h3>線と塗り</h3>
+          <span id="paint-target" class="panel-sub"></span>
+        </div>
+        <div id="paint-body"></div>
+      </section>
+
+      <section class="panel" id="panel-info">
+        <div class="panel-head">
+          <h3>図形の情報</h3>
+          <span id="info-note" class="panel-sub"></span>
+        </div>
+        <div id="info-body"></div>
+      </section>
+
+      <section class="panel" id="panel-align">
+        <div class="panel-head">
+          <h3>整列</h3>
+          <span id="align-note" class="panel-sub"></span>
+        </div>
+        <div id="align-body"></div>
+      </section>
+
+      <section class="panel" id="panel-palette">
+        <div class="panel-head">
+          <h3>パレット</h3>
+          <button id="btn-pal-add" title="メインカラーをパレットに追加">＋追加</button>
+        </div>
+        <div id="palette"></div>
+      </section>
+
+      <section class="panel grow" id="panel-layers">
+        <h3>レイヤー</h3>
+        <div id="layer-list"></div>
+        <label class="opacity-row"><span>不透明度</span><input type="range" id="in-opacity" min="0" max="100"><em id="opacity-val"></em></label>
+        <div class="layer-buttons">
+          <button data-action="addRaster" title="ラスターレイヤー(ドット・ブラシで描く)を追加">＋ラスター</button>
+          <button data-action="addVector" title="ベクターレイヤー(図形を編集可能なまま保持)を追加">＋ベクター</button>
+          <button data-action="dupLayer" title="レイヤーを複製">複製</button>
+          <button data-action="layerUp" title="上へ">▲</button>
+          <button data-action="layerDown" title="下へ">▼</button>
+          <button data-action="mergeDown" title="下のレイヤーと結合">結合</button>
+          <button data-action="effects" title="エフェクト(オーラ・炎・光・電撃・キラキラなど)をこのレイヤーに付ける">効果</button>
+          <button data-action="deleteLayer" class="danger" title="レイヤーを削除">削除</button>
+        </div>
+      </section>
+    </aside>
+
+    <div id="split-timeline" class="splitter h" title="ドラッグでタイムラインの高さを変える(下げるとキャンバスが広がる)/ ダブルクリックでたたむ・戻す"></div>
+
+    <section id="timeline">
+      <div class="tl-controls">
+        <div class="group">
+          <button data-action="firstFrame" class="icon-text" title="最初のフレーム (Home)">⏮</button>
+          <button data-action="prevFrame" class="icon-text" title="前のフレーム (,)">◀</button>
+          <button data-action="togglePlay" id="btn-play" class="icon-text" title="再生 (Enter)">▶</button>
+          <button data-action="nextFrame" class="icon-text" title="次のフレーム (.)">▶|</button>
+          <button data-action="lastFrame" class="icon-text" title="最後のフレーム (End)">⏭</button>
+          <label class="check" title="最後まで行ったら最初に戻る"><input type="checkbox" id="tl-loop" checked>ループ</label>
+        </div>
+        <div class="group">
+          <label title="このフレームを表示する時間">時間 <input type="number" id="tl-duration" min="10" max="10000" step="10"> ms</label>
+          <button data-action="durationAll" title="この時間を全フレームに適用">全フレームに適用</button>
+        </div>
+        <div class="group">
+          <button data-action="addFrame" title="空のフレームを追加 (Alt+N)">＋新規</button>
+          <button data-action="dupFrame" title="このフレームを複製 (Alt+D)">複製</button>
+          <button data-action="moveFrameLeft" class="icon-text" title="左へ移動">←</button>
+          <button data-action="moveFrameRight" class="icon-text" title="右へ移動">→</button>
+          <button data-action="deleteFrame" class="danger" title="このフレームを削除">削除</button>
+        </div>
+        <div class="group">
+          <label class="check" title="前後のフレームを薄く表示 (Alt+O)"><input type="checkbox" id="tl-onion">オニオンスキン</label>
+          <label title="表示する前のフレーム数">前 <input type="number" id="tl-onion-prev" min="0" max="5" value="1"></label>
+          <label title="表示する後のフレーム数">後 <input type="number" id="tl-onion-next" min="0" max="5" value="1"></label>
+        </div>
+        <div class="group">
+          <button data-action="exportGif" title="アニメーションGIFとして書き出し">GIF書き出し</button>
+          <button data-action="exportSheet" title="全フレームを1枚に並べたPNG">スプライトシート</button>
+        </div>
+        <span id="tl-info"></span>
+      </div>
+      <div id="tl-strip"></div>
+    </section>
+
+    <footer id="statusbar">
+      <span id="st-pos"></span>
+      <span id="st-size"></span>
+      <span id="st-mode"></span>
+      <span id="st-layer"></span>
+      <span id="st-claude" data-action="claude" hidden></span>
+    </footer>
+  </div>
+
+  <!-- レイアウトを変えている間だけ出る: 説明と、置いていないボタンの箱 -->
+  <div id="layout-bar" hidden>
+    <div class="lb-head">
+      <b>レイアウト</b><span>ボタンを持って、上のバーか左のツールバーの好きな所へ。この箱へ入れると、外せます</span>
+      <button class="lb-btn" data-action="panels">右のパネル…</button><button class="lb-btn" data-action="design">色とデザイン…</button><button class="lb-btn" data-action="charm">チャーム…</button>
+      <button id="layout-reset" class="lb-btn">はじめの並びに戻す</button><button id="layout-done" class="lb-btn primary">完了</button>
+    </div>
+    <div id="layout-tray"></div>
+  </div>
+
+  <div id="modal-root"></div>
+  <div id="toast"></div>
+  <script type="module" src="js/app.js"></script>
+  <script type="module" src="web.js"></script>
+</body>
+</html>

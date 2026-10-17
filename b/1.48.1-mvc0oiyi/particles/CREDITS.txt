@@ -1,0 +1,9 @@
+このフォルダの絵(*.png)と、src/js/gdparticles-data.js の粒子の設定は、次のライブラリから取り込んだものです。
+
+  Free GDevelop Particles Library  by Wishforge (Wishforge Games)
+  https://wishforge.itch.io/free-gdevelop-particles-library
+
+ページの表記(2026-10-08 に確認):
+  "All particle effects are easy to customize and free to use in your free or commercial projects."
+
+絵は長い辺を 160px までに縮めています。取り込み直すときは scripts/import-gdparticles.py を使います。
